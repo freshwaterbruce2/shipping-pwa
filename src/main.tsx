@@ -6,7 +6,12 @@ import "./styles/responsive.css";
 import { registerServiceWorker } from "./utils/registerServiceWorker";
 import PwaWrapper from "./components/pwa/PwaWrapper";
 
-ReactDOM.createRoot(document.getElementById("root")!).render(
+const rootElement = document.getElementById("root")!;
+
+// Clear loading screen
+rootElement.innerHTML = '';
+
+ReactDOM.createRoot(rootElement).render(
   <React.StrictMode>
     <PwaWrapper>
       <App />
