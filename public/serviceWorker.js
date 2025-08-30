@@ -18,27 +18,26 @@ const urlsToCache = [
 
 // Install service worker
 self.addEventListener('install', (event) => {
-  console.log('Service Worker: Installing...');
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
-        console.log('Service Worker: Caching files');
         return cache.addAll(urlsToCache);
       })
-      .then(() => self.skipWaiting())
+      .catch(() => {
+        // Ignore cache errors
+      })
   );
+  self.skipWaiting();
 });
 
 // Activate service worker
 self.addEventListener('activate', (event) => {
-  console.log('Service Worker: Activating...');
   const cacheWhitelist = [CACHE_NAME];
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
           if (cacheWhitelist.indexOf(cacheName) === -1) {
-            console.log('Service Worker: Clearing old cache', cacheName);
             return caches.delete(cacheName);
           }
           return null;
@@ -72,7 +71,6 @@ self.addEventListener('fetch', (event) => {
         return caches.match(event.request)
           .then((cachedResponse) => {
             if (cachedResponse) {
-              console.log('Service Worker: Serving cached content', event.request.url);
               return cachedResponse;
             }
             
@@ -95,7 +93,6 @@ self.addEventListener('fetch', (event) => {
 
 // Handle data sync when coming online
 self.addEventListener('sync', (event) => {
-  console.log('Service Worker: Syncing...', event.tag);
   if (event.tag === 'sync-shipping-data') {
     event.waitUntil(syncShippingData());
   }
@@ -129,8 +126,6 @@ self.addEventListener('notificationclick', (event) => {
 });
 
 async function syncShippingData() {
-  console.log('Syncing shipping data...');
-  
   try {
     // Get data from IndexedDB
     const DB_NAME = "ShippingDB"; 
@@ -142,9 +137,7 @@ async function syncShippingData() {
       // Note: No upgrade logic here, assuming DB is created/upgraded by the main app
     });
 
-    // Here we would synchronize with a server if we had one
-    // For now, just log that we tried to sync
-    console.log('Data sync simulated - app is offline-only');
+    // Simulate data sync for offline-only app
     
     // Close the database connection opened here
     db.close();
@@ -159,8 +152,7 @@ async function syncShippingData() {
     });
 
     return true;
-  } catch (error) {
-    console.error('Sync failed:', error);
+  } catch {
     return false;
   }
 }
@@ -168,7 +160,6 @@ async function syncShippingData() {
 // Log service worker lifecycle
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'LOG_STATUS') {
-    console.log('Service Worker: Status requested by client');
     event.ports[0].postMessage({
       status: 'active',
       version: CACHE_NAME
